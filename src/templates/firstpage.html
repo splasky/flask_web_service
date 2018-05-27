@@ -1,0 +1,107 @@
+<html>
+
+<head>
+    <title>LASS: IDW Diagram</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="refresh" content="300">
+    <link href='https://api.tiles.mapbox.com/mapbox.js/v1.6.3/mapbox.css' rel='stylesheet' />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        html,
+        body,
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        #p_time {
+            position: absolute;
+            background-color: #FFF;
+            opacity: 1;
+            border-radius: 2px;
+            padding: 5px 5px 5px 5px;
+            right: 5px;
+            top: 5px;
+        }
+
+        #about {
+            position: absolute;
+            background-color: #FFF;
+            opacity: 0.8;
+            border-radius: 1px;
+            padding: 1px 1px 1px 1px;
+            left: 4px;
+            bottom: 4px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.js"> </script>
+    <script src="https://api.tiles.mapbox.com/mapbox.js/v2.2.1/mapbox.js"></script>
+    <script src="/static/js/leaflet-idw.js"> </script>
+    <!-- <script src="data.js"> </script> -->
+    <script src="/static/js/emission.js"> </script>
+</head>
+
+<body>
+    <div id="map"></div>
+</body>
+
+<script>
+    var PM25points = JSON.parse('{{ PM25 }}')
+
+    console.log(typeof PM25points)
+    L.mapbox.accessToken = 'pk.eyJ1IjoibXltYWt0dWIiLCJhIjoiY2oyNXBwdXVxMDB0YTMybzdkdzl5cjRodSJ9.803z0kHzvQVFMstwjfjCqg';
+    //L.mapbox.accessToken = $token;
+    map = L.mapbox.map('map', 'zetter.i73ka9hn', { attributionControl: false })
+        .setView([23.77, 120.88], 8);
+
+
+    var credits = L.control.attribution().addTo(map);
+    credits.addAttribution("© <a href='https://www.mapbox.com/map-feedback/'>Mapbox</a> " +
+        "© <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> " +
+        //                        "© <a href='http://lass-net.org'>LASS</a> & <a href='https://sites.google.com/site/cclljj/NRL'>IIS-NRL</a>" +
+        " | <a href='http://creativecommons.org/licenses/by-nc-sa/4.0/'>CC-BY-NC-SA</a>");
+
+    map.options.maxZoom = 16
+
+
+    var idw = L.idwLayer(PM25points, {
+        opacity: 0.5,
+        maxZoom: 16,
+        minZoom: 8,
+        cellSize: 5,
+        exp: 2,
+        // max: 1000
+        max: 200
+    }).addTo(map);
+
+    var numEmission = EmissionPoints.length;
+    for (var i = 0; i < numEmission; i++) {
+        var gps_lat = EmissionPoints[i][0];
+        var gps_lon = EmissionPoints[i][1];
+        var description = EmissionPoints[i][2];
+
+        var polygon = L.polygon([
+            [gps_lat + 0.015, gps_lon],
+            [gps_lat, gps_lon + 0.015],
+            [gps_lat - 0.015, gps_lon],
+            [gps_lat, gps_lon - 0.015]
+        ], {
+                color: '#0000ff',
+                fillOpacity: 0.5,
+                fillColor: '#00ccff',
+            }).addTo(map)
+            .bindPopup(description);
+    }
+
+
+
+</script>
+<script src="/static/js/idw-legend.js"></script>
+
+</html>
