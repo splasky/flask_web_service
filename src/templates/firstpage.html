@@ -12,10 +12,10 @@
     <script src="https://api.tiles.mapbox.com/mapbox.js/v2.2.1/mapbox.js"></script>
     <script src="/static/js/leaflet-idw.js"> </script>
     <script src="/static/js/emission.js"> </script>
-
+    
     <script>
         function draw_line_chart(element_id, data, title) {
-            google.charts.load('current', { 'packages': ['line'] });
+            google.charts.load('current', { 'packages': ['corechart'] });
             google.charts.setOnLoadCallback(drawChart);
             var length_of_data = data.length;
             function drawChart() {
@@ -147,5 +147,4 @@
 
 </script>
 <script src="/static/js/idw-legend.js"></script>
-
 </html>
