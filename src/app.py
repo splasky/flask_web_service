@@ -34,7 +34,7 @@ def PrintException():
 
 @app.route('/')
 def main():
-    return render_template('index.html',PM25=PM25(),citys=get_citys())
+    return render_template('firstpage.html',PM25=PM25(),citys=get_citys())
 
 def PM25():
     air_box_json=pd.read_json('https://pm25.lass-net.org/data/last-all-airbox.json')
