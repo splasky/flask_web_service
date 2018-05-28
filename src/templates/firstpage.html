@@ -4,9 +4,56 @@
     <title>PM25 Diagram</title>
     <meta charset="utf-8" />
     <meta http-equiv="refresh" content="300">
-    <link href='https://api.tiles.mapbox.com/mapbox.js/v1.6.3/mapbox.css' rel='stylesheet' />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.css" />
+    <link href='https://api.tiles.mapbox.com/mapbox.js/v1.6.3/mapbox.css' rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.css" rel="stylesheet" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.js"> </script>
+    <script src="https://api.tiles.mapbox.com/mapbox.js/v2.2.1/mapbox.js"></script>
+    <script src="/static/js/leaflet-idw.js"> </script>
+    <script src="/static/js/emission.js"> </script>
+
+    <script>
+        function draw_line_chart(element_id, data, title) {
+            google.charts.load('current', { 'packages': ['line'] });
+            google.charts.setOnLoadCallback(drawChart);
+            var length_of_data = data.length;
+            function drawChart() {
+                var data_table = new google.visualization.DataTable();
+                data_table.addColumn('string', 'Year');
+                data_table.addColumn('number', title);
+                for (const [key, value] of Object.entries(data)) {
+                    data_table.addRow([key, value])
+                }
+
+                var options = {
+                    title: title,
+                    curveType: 'function',
+                    legend: { position: 'bottom' }
+                };
+                var chart = new google.visualization.LineChart(document.getElementById(element_id));
+                chart.draw(data_table, options);
+            }
+        }
+
+    </script>
+    <script type="text/javascript">
+        $(function () {
+            $('#citys').bind('change', function () {
+                city_name = $("#citys option:selected").text();
+                city_id = $("#citys option:selected").val();
+                console.log('select change!')
+                $.getJSON('/city_pneumonia', {
+                    city: city_name,
+                    id: city_id
+                }, function (data) {
+                    draw_line_chart('Health_Insurance_Visits', data['健保就診總人次'], '健保就診總人次');
+                    draw_line_chart('Other_pneumonia_health_insurance_visits', data['其他肺炎健保就診人次'], '其他肺炎健保就診人次');
+                });
+                return false;
+            });
+        });
+    </script>
     <style>
         body {
             padding: 0;
@@ -40,20 +87,27 @@
             bottom: 4px;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.js"> </script>
-    <script src="https://api.tiles.mapbox.com/mapbox.js/v2.2.1/mapbox.js"></script>
-    <script src="/static/js/leaflet-idw.js"> </script>
-    <script src="/static/js/emission.js"> </script>
 </head>
 
 <body>
-    <div id="map"></div>
+    <div>
+        <div id="map"></div>
+    </div>
+    <div>
+        <select id=citys>
+            {% for city in citys %}
+            <option value="{{ city }}">{{ city }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <div id="Health_Insurance_Visits" style="width: 900px; height: 500px"></div>
+        <div id="Other_pneumonia_health_insurance_visits" style="width: 900px; height: 500px"></div>
+    </div>
 </body>
-
 <script>
     var PM25points = JSON.parse('{{ PM25 }}')
 
-    console.log(typeof PM25points)
     L.mapbox.accessToken = 'pk.eyJ1IjoibXltYWt0dWIiLCJhIjoiY2oyNXBwdXVxMDB0YTMybzdkdzl5cjRodSJ9.803z0kHzvQVFMstwjfjCqg';
     //L.mapbox.accessToken = $token;
     map = L.mapbox.map('map', 'zetter.i73ka9hn', { attributionControl: false })
@@ -90,8 +144,6 @@
             }).addTo(map)
             .bindPopup(description);
     }
-
-
 
 </script>
 <script src="/static/js/idw-legend.js"></script>
