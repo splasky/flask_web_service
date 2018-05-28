@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>LASS: IDW Diagram</title>
+    <title>PM25 Diagram</title>
     <meta charset="utf-8" />
     <meta http-equiv="refresh" content="300">
     <link href='https://api.tiles.mapbox.com/mapbox.js/v1.6.3/mapbox.css' rel='stylesheet' />
@@ -43,7 +43,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.js"> </script>
     <script src="https://api.tiles.mapbox.com/mapbox.js/v2.2.1/mapbox.js"></script>
     <script src="/static/js/leaflet-idw.js"> </script>
-    <!-- <script src="data.js"> </script> -->
     <script src="/static/js/emission.js"> </script>
 </head>
 
@@ -59,13 +58,6 @@
     //L.mapbox.accessToken = $token;
     map = L.mapbox.map('map', 'zetter.i73ka9hn', { attributionControl: false })
         .setView([23.77, 120.88], 8);
-
-
-    var credits = L.control.attribution().addTo(map);
-    credits.addAttribution("© <a href='https://www.mapbox.com/map-feedback/'>Mapbox</a> " +
-        "© <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> " +
-        //                        "© <a href='http://lass-net.org'>LASS</a> & <a href='https://sites.google.com/site/cclljj/NRL'>IIS-NRL</a>" +
-        " | <a href='http://creativecommons.org/licenses/by-nc-sa/4.0/'>CC-BY-NC-SA</a>");
 
     map.options.maxZoom = 16
 

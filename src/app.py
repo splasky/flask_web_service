@@ -1,7 +1,7 @@
 #! /usr/bin/python
 # -*- coding: utf-8 -*-
 # vim:fenc=utf-8
-# Last modified: 2018-05-21 11:25:12
+# Last modified: 2018-05-28 11:23:08
 
 import logging
 import sys
@@ -35,21 +35,13 @@ def PrintException():
 
 @app.route('/')
 def main():
-    return render_template('firstpage.html',PM25=PM25())
+    return render_template('firstpage.html', PM25=PM25())
+
 
 def PM25():
-    air_box_json=pd.read_json('https://pm25.lass-net.org/data/last-all-airbox.json')
-    PM25points=[[s['gps_lat'],s['gps_lon'],s['s_d0']] for s in air_box_json['feeds']]
+    air_box_json = pd.read_json('https://pm25.lass-net.org/data/last-all-airbox.json')
+    PM25points = [[s['gps_lat'], s['gps_lon'], s['s_d0']] for s in air_box_json['feeds']]
     return PM25points
-
-@app.route('/showSignUp')
-def showSignUp():
-    return render_template('signup.html')
-
-
-@app.route('/showLogIn')
-def showSignIn():
-    return render_template('login.html')
 
 
 @app.route('/logIn', methods=['POST'])
@@ -70,39 +62,6 @@ def signIn():
             return json.dumps({'message': 'User login successfully!'})
         else:
             return json.dumps({'message': 'User login failed'})
-
-    except Exception as e:
-        PrintException()
-        return json.dumps({'error': str(e)})
-    finally:
-        cursor.close()
-        conn.close()
-
-
-@app.route('/signUp', methods=['POST'])
-def signUp():
-    conn = mysql.connect()
-    cursor = conn.cursor()
-    try:
-        # read the posted values from the UI
-        _name = request.form.get('inputName', None)
-        _password = request.form.get('inputPassword', None)
-
-        logging.debug("account:{_name} password:{_password}")
-        # validate the received values
-        if _name and _password:
-
-            _hashed_password = generate_password_hash(_password)
-            cursor.callproc('sp_createUser', (_name, _hashed_password))
-            data = cursor.fetchall()
-
-            if len(data) is 0:
-                conn.commit()
-                return json.dumps({'message': 'User created successfully!'})
-            else:
-                return json.dumps({'error': str(data[0])})
-        else:
-            return json.dumps({'html': '<span>Enter the required fields</span>'})
 
     except Exception as e:
         PrintException()
