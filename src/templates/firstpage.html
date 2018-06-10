@@ -12,7 +12,18 @@
     <script src="https://api.tiles.mapbox.com/mapbox.js/v2.2.1/mapbox.js"></script>
     <script src="/static/js/leaflet-idw.js"> </script>
     <script src="/static/js/emission.js"> </script>
-    
+    <!-- google font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+    <!-- vue js -->
+    <script src="https://unpkg.com/vue" charset="utf-8"></script>
+    <script charset="utf-8">
+        Vue.config.devtools=false;
+        Vue.config.productionTip=false;
+    </script>
+    <!-- axios -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js" charset="utf-8"></script>
+    <!-- weatherjs -->
+    <link href="/static/css/weather.css" rel="stylesheet">
     <script>
         function draw_line_chart(element_id, data, title) {
             google.charts.load('current', { 'packages': ['corechart'] });
@@ -104,6 +115,28 @@
         <div id="Health_Insurance_Visits" style="width: 900px; height: 500px"></div>
         <div id="Other_pneumonia_health_insurance_visits" style="width: 900px; height: 500px"></div>
     </div>
+
+    <div id="city_for_weather">
+        <select v-model="weather_city">
+            {% for city in citys %}
+            <option value="{{ city }}">{{ city }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div id="app">
+     <weather-app v-if="validResponse"
+        :city = city
+        :location = location
+        :hours = hours
+        :mins = mins
+        :day = day
+        :temp = temp
+        :tempc = tempC
+        :tempf = tempF
+        :cloudtxt = conditionText
+        :cloudicon = conditionIcon
+        ></weather-app>
+    </div>
 </body>
 <script>
     var PM25points = JSON.parse('{{ PM25 }}')
@@ -147,4 +180,6 @@
 
 </script>
 <script src="/static/js/idw-legend.js"></script>
+<!-- weatherjs -->
+<script src="/static/js/weather.js"></script>
 </html>
