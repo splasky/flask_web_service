@@ -27,7 +27,9 @@ window.onload = function () {
                 <div class="bottom-section">
                     <div class="bottom-left">
                         <p><img :src="cloudicon" height="50" alt="cloud"></p>
-                        <p>{{ temps === true ? tempcelsius : tempfahrt }}</p>
+                        <p>{{ temps === true ? tempcelsius_min : tempfahrt_min }}</p>
+                        <p>~</p>
+                        <p>{{ temps === true ? tempcelsius_max : tempfahrt_max }}</p>
                         <div>
                             <span @click="temps = true" :class="{'temp-c': temps}"><sup> o</sup>C</span>
                             <span>|</span>
@@ -40,16 +42,18 @@ window.onload = function () {
 
         // props to recieve data from parent vue instance object
         props: [
-            "city", "temp", "tempc", "tempf", "cloudtxt", 
-            "cloudicon","location",
+            "city", "temp", "tempc_max", "tempc_min","tempf_max","tempf_min",
+            "cloudtxt", "cloudicon","location",
             "hours", "day", "mins"
         ],
 
         // component data properties
         data() {
             return {
-                tempcelsius: this.tempc,
-                tempfahrt: this.tempf,
+                tempcelsius_max: this.tempc_max,
+                tempcelsius_min: this.tempc_min,
+                tempfahrt_max: this.tempf_max,
+                tempfahrt_min: this.tempf_min,
                 temps: this.temp
             };
         }
@@ -59,14 +63,16 @@ window.onload = function () {
     var fetch_weather=new Vue({
         el: "#app",
         data: {
-            city: "台中市",
+            city: "臺中市",
             location: "台灣",
             hours: 0,
             mins: 0,
             day: "",
             temp: true,
-            tempC: "",
-            tempF: "",
+            max_temp_c:"",
+            max_temp_f:"",
+            min_temp_c:"",
+            min_temp_f:"",
             conditionText: "",
             conditionIcon: "http:",
             validResponse: ""
@@ -99,12 +105,14 @@ window.onload = function () {
                                 self.validResponse = false;
                             } else {
                                 self.validResponse = true;
-                                
+
                                 // obtain city name, country, temperature, cloud icon, 
                                 //  cloud info from api
                                 self.city = response.data.location.name;
-                                self.tempC = Math.floor(response.data.current.max_temp_c);
-                                self.tempF = Math.floor(response.data.current.max_temp_f);
+                                self.max_temp_c = Math.floor(response.data.current.max_temp_c);
+                                self.max_temp_f = Math.floor(response.data.current.max_temp_f);
+                                self.min_temp_c = Math.floor(response.data.current.min_temp_c);
+                                self.min_temp_f = Math.floor(response.data.current.min_temp_f);
                                 self.conditionText = response.data.current.condition.text;
                                 self.conditionIcon += response.data.current.condition.icon;
                                 self.location = response.data.location.country;
@@ -137,7 +145,6 @@ window.onload = function () {
             }
         }
     });
-
     var city_weather=new Vue({
       el: '#city_for_weather',
       data: {

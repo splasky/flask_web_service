@@ -13,6 +13,7 @@ from flaskext.mysql import MySQL
 import urllib
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from math import floor
 
 mysql = MySQL()
 app = Flask(__name__)
@@ -86,7 +87,7 @@ def get_weather_from_city():
 
 def get_weather_icon(condition: int):
     icon = ''
-    condition=int(condition)
+    condition = int(condition)
     if condition == 2:
         icon = 'cloud'
     elif condition == 8:
@@ -121,8 +122,10 @@ def request_weather():
     xml_np = {'default': 'urn:cwb:gov:tw:cwbcommon:0.1'}
     return weather_data, xml_np
 
+
 def temp_c_to_f(temp_c):
-        return temp_c * 1.8 + 32
+    return floor(temp_c * 1.8 + 32)
+
 
 class Time_element:
 
@@ -131,9 +134,9 @@ class Time_element:
         self.end_time = end_time
         self.parameterName = parameterName
         self.parameterValue = parameterValue
-    
+
     def __str__(self):
-        return '{},{},{},{}'.format(self.start_time,self.end_time,self.parameterName,self.parameterValue)
+        return '{},{},{},{}'.format(self.start_time, self.end_time, self.parameterName, self.parameterValue)
 
 
 class Weather_element:
@@ -188,6 +191,10 @@ class Weathers(dict):
 
     def date_dump(self, city, date):
         weather = self.get(city)
+        print('{},{},{}'.format(weather, city, date))
+        if not weather:
+            return None
+
         return json.dumps({"location": {
             "name": city,
             "country": "Taiwan"
@@ -207,21 +214,21 @@ def parse_weather_xml():
         for w_ele in location.findall('default:weatherElement', xml_np):
             ele_name = w_ele.find('default:elementName', xml_np).text
             weth_ele = Weather_element(ele_name)
-            if ele_name =='Wx':
-                parameterValueRe='default:parameterValue'
+            if ele_name == 'Wx':
+                parameterValueRe = 'default:parameterValue'
             else:
-                parameterValueRe='default:parameterUnit'
+                parameterValueRe = 'default:parameterUnit'
 
             for time in w_ele.findall('default:time', xml_np):
-               
-                    start_time=time.find('default:startTime',xml_np).text
-                    end_time=time.find('default:endTime',xml_np).text
-                    parameter=time.find('default:parameter',xml_np)
-                    parameterName=parameter.find('default:parameterName',xml_np).text
-                    parameterValue=parameter.find(parameterValueRe,xml_np).text
-                    time_ele = Time_element(start_time, end_time,
+
+                start_time = time.find('default:startTime', xml_np).text
+                end_time = time.find('default:endTime', xml_np).text
+                parameter = time.find('default:parameter', xml_np)
+                parameterName = parameter.find('default:parameterName', xml_np).text
+                parameterValue = parameter.find(parameterValueRe, xml_np).text
+                time_ele = Time_element(start_time, end_time,
                                         parameterName, parameterValue)
-                    weth_ele.append(time_ele)
+                weth_ele.append(time_ele)
             weth_eles.append(weth_ele)
 
         weathers[city] = Weather(weth_eles[0], weth_eles[1], weth_eles[2])
