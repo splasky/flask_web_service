@@ -1,7 +1,7 @@
 #! /usr/bin/python
 # -*- coding: utf-8 -*-
 # vim:fenc=utf-8
-# Last modified: 2018-06-10 16:45:18
+# Last modified: 2018-06-11 13:51:54
 
 import logging
 import sys
@@ -37,9 +37,11 @@ def PrintException():
 @app.route('/')
 def main():
     try:
-        return render_template('firstpage.html', PM25=PM25(), citys=get_citys())
+        return render_template('firstpage.html', PM25=PM25(),
+                               citys=get_citys(), weather_citys=get_weather_citys())
     except:
-        return render_template('firstpage.html', citys=get_citys())
+        return render_template('firstpage.html',
+                               citys=get_citys(), weather_citys=get_weather_citys())
 
 
 def PM25():
@@ -57,6 +59,12 @@ def get_citys():
     pneumonia = get_pneumonia()
     citys = pneumonia[['縣市']].drop_duplicates()
     return citys['縣市']
+
+
+@app.route('/get_weather_citys')
+def get_weather_citys():
+    weather = parse_weather_xml()
+    return weather.keys()
 
 
 @app.route('/city_pneumonia', methods=['GET', 'POST'])

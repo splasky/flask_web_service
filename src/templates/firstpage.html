@@ -118,8 +118,8 @@
 
     <div id="city_for_weather">
         <select v-model="weather_city">
-            {% for city in citys %}
-            <option value="{{ city }}">{{ city }}</option>
+            {% for city in weather_citys %}
+                <option value="{{ city }}">{{ city }}</option>
             {% endfor %}
         </select>
     </div>
