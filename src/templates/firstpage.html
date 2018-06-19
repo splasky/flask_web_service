@@ -17,8 +17,8 @@
     <!-- vue js -->
     <script src="https://unpkg.com/vue" charset="utf-8"></script>
     <script charset="utf-8">
-        Vue.config.devtools=false;
-        Vue.config.productionTip=false;
+        Vue.config.devtools = false;
+        Vue.config.productionTip = false;
     </script>
     <!-- axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js" charset="utf-8"></script>
@@ -65,6 +65,7 @@
             });
         });
     </script>
+
     <style>
         body {
             padding: 0;
@@ -119,27 +120,38 @@
     <div id="city_for_weather">
         <select v-model="weather_city">
             {% for city in weather_citys %}
-                <option value="{{ city }}">{{ city }}</option>
+            <option value="{{ city }}">{{ city }}</option>
             {% endfor %}
         </select>
     </div>
     <div id="app">
-     <weather-app v-if="validResponse"
-        :city = city
-        :location = location
-        :hours = hours
-        :mins = mins
-        :day = day
-        :temp = temp
-        :tempc_max = max_temp_c
-        :tempc_min = min_temp_c
-        :tempf_max = max_temp_f
-        :tempf_min = min_temp_f
-        :cloudtxt = conditionText
-        :cloudicon = conditionIcon
-        ></weather-app>
+        <weather-app v-if="validResponse" 
+        :city=city 
+        :location=location 
+        :hours=hours 
+        :mins=mins 
+        :day=day 
+        :temp=temp 
+        :tempc_max=max_temp_c 
+        :tempc_min=min_temp_c 
+        :tempf_max=max_temp_f 
+        :tempf_min=min_temp_f 
+        :cloudtxt=conditionText 
+        :cloudicon=conditionIcon>
+        </weather-app>
+    </div>
+
+    <div id='address_translator'>
+        <h2>Address to Latitude and longitude</h2>
+        <input v-model="address" placeholder="input address">
+        <button @click="getAnswer">Translate</button>
+        <p>Address is: ${ address }</p>
+        <p>Formatted address: ${ formatted_address }</p>
+        <p>lat: ${ lat }</p>
+        <p>lng: ${ lng }</p>
     </div>
 </body>
+<!-- pm25 -->
 <script>
     var PM25points = JSON.parse('{{ PM25 }}')
 
@@ -179,9 +191,39 @@
             }).addTo(map)
             .bindPopup(description);
     }
-
 </script>
 <script src="/static/js/idw-legend.js"></script>
 <!-- weatherjs -->
 <script src="/static/js/weather.js"></script>
+<!-- address translator -->
+<script>
+        var Address_Translator = new Vue({
+            delimiters:['${', '}'],
+            el: '#address_translator',
+            data: {
+                address: '',
+                formatted_address: '',
+                lat: '',
+                lng: ''
+            },
+            methods: {
+                getAnswer: function () {
+                    let self = this;
+                    axios.get('/get_lat_lng', {
+                        params: {
+                            address: self.address
+                        }
+                    })
+                        .then(function (response) {
+                            self.formatted_address = response.data.address;
+                            self.lat = response.data.lat;
+                            self.lng = response.data.lng;
+                        })
+                        .catch(function (error) {
+                            console.log('Error! Could not reach the API. ' + error);
+                        })
+                }
+            }
+        })
+    </script>
 </html>

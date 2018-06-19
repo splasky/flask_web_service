@@ -1,7 +1,7 @@
 #! /usr/bin/python
 # -*- coding: utf-8 -*-
 # vim:fenc=utf-8
-# Last modified: 2018-06-11 13:51:54
+# Last modified: 2018-06-16 20:46:29
 
 import logging
 import sys
@@ -12,6 +12,7 @@ from flask import url_for
 from flaskext.mysql import MySQL
 import urllib
 import xml.etree.ElementTree as ET
+from urllib.parse import quote
 from datetime import datetime
 from math import floor
 
@@ -52,7 +53,7 @@ def PM25():
 
 
 def get_pneumonia():
-    return pd.read_json('https://quality.data.gov.tw/dq_download_json.php?nid=14595&md5_url=8281b7ff9faf81e7399c6f734ed5f34b')
+    return pd.read_json('https://od.cdc.gov.tw/eic/NHI_OtherPneumonia.json')
 
 
 @app.route('/citys')
@@ -83,7 +84,6 @@ def get_weather_from_city():
     city = request.args.get('city', None, type=str)
     date = request.args.get('date', None, type=int)
     return get_weather(city, date)
-
 
 def get_weather_icon(condition: int):
     icon = ''
@@ -234,6 +234,25 @@ def parse_weather_xml():
         weathers[city] = Weather(weth_eles[0], weth_eles[1], weth_eles[2])
 
     return weathers
+
+@app.route('/get_lat_lng', methods=['GET'])
+def get_lat_lng():
+    address = request.args.get('address',None,type=str)
+    address= quote(address.encode('utf-8'))
+    with urllib.request.urlopen(
+        'https://maps.googleapis.com/maps/api/geocode/xml?address={}&key=AIzaSyAyAroCZFlN3Tnqefr89x9TQiPCfGiGmgU'.format(address)
+        ) as location:
+        data=location.read()
+        root=ET.fromstring(data)
+        result = root.find('result')
+
+        return json.dumps({
+            'address':result.find(".//formatted_address").text,
+            'lat':result.find(".//geometry/location/lat").text,
+            'lng':result.find(".//geometry/location/lng").text
+            }
+        )
+
 
 
 if __name__ == "__main__":
