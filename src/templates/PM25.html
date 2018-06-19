@@ -1,0 +1,157 @@
+{% extends 'base.html' %} {% block title %}PM25{% endblock %} {%block head %}
+<meta charset="utf-8" />
+<meta http-equiv="refresh" content="300">
+<link href='https://api.tiles.mapbox.com/mapbox.js/v1.6.3/mapbox.css' rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.css" rel="stylesheet" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.js"> </script>
+<script src="https://api.tiles.mapbox.com/mapbox.js/v2.2.1/mapbox.js"></script>
+<script src="/static/js/leaflet-idw.js"></script>
+<script src="/static/js/emission.js"></script>
+<!-- vue js -->
+<script src="https://unpkg.com/vue" charset="utf-8"></script>
+<script charset="utf-8">
+    Vue.config.devtools = false;
+    Vue.config.productionTip = false;
+</script>
+<!-- axios -->
+<script src="https://unpkg.com/axios/dist/axios.min.js" charset="utf-8"></script>
+<!-- google chart -->
+<script>
+    function draw_line_chart(element_id, data, title) {
+        google.charts.load('current', { 'packages': ['corechart'] });
+        google.charts.setOnLoadCallback(drawChart);
+        var length_of_data = data.length;
+        function drawChart() {
+            var data_table = new google.visualization.DataTable();
+            data_table.addColumn('string', 'Year');
+            data_table.addColumn('number', title);
+            for (const [key, value] of Object.entries(data)) {
+                data_table.addRow([key, value])
+            }
+
+            var options = {
+                title: title,
+                curveType: 'function',
+                legend: { position: 'bottom' }
+            };
+            var chart = new google.visualization.LineChart(document.getElementById(element_id));
+            chart.draw(data_table, options);
+        }
+    }
+</script>
+
+<style>
+    body {
+        padding: 0;
+        margin: 0;
+    }
+
+    html,
+    body,
+    #map {
+        height: 100%;
+        width: 100%;
+    }
+
+    #p_time {
+        position: absolute;
+        background-color: #FFF;
+        opacity: 1;
+        border-radius: 2px;
+        padding: 5px 5px 5px 5px;
+        right: 5px;
+        top: 5px;
+    }
+</style>
+{% endblock %} 
+
+{% block content %}
+<div>
+    <div id="map"></div>
+</div>
+<div id="Health_Insurance">
+    <select v-model="selected" v-on:change="city_change">
+        {% for city in citys %}
+        <option value="{{ city }}">{{ city }}</option>
+        {% endfor %}
+    </select>
+    <div>
+        <div id="Health_Insurance_Visits" style="width: 900px; height: 500px"></div>
+        <div id="Other_pneumonia_health_insurance_visits" style="width: 900px; height: 500px"></div>
+    </div>
+</div>
+
+<!-- pm25 -->
+<script>
+    var PM25points = JSON.parse('{{ PM25 }}')
+
+    L.mapbox.accessToken = 'pk.eyJ1IjoibXltYWt0dWIiLCJhIjoiY2oyNXBwdXVxMDB0YTMybzdkdzl5cjRodSJ9.803z0kHzvQVFMstwjfjCqg';
+    //L.mapbox.accessToken = $token;
+    map = L.mapbox.map('map', 'zetter.i73ka9hn', { attributionControl: false })
+        .setView([23.77, 120.88], 8);
+
+    map.options.maxZoom = 16
+
+
+    var idw = L.idwLayer(PM25points, {
+        opacity: 0.5,
+        maxZoom: 16,
+        minZoom: 8,
+        cellSize: 5,
+        exp: 2,
+        // max: 1000
+        max: 200
+    }).addTo(map);
+
+    var numEmission = EmissionPoints.length;
+    for (var i = 0; i < numEmission; i++) {
+        var gps_lat = EmissionPoints[i][0];
+        var gps_lon = EmissionPoints[i][1];
+        var description = EmissionPoints[i][2];
+
+        var polygon = L.polygon([
+            [gps_lat + 0.015, gps_lon],
+            [gps_lat, gps_lon + 0.015],
+            [gps_lat - 0.015, gps_lon],
+            [gps_lat, gps_lon - 0.015]
+        ], {
+                color: '#0000ff',
+                fillOpacity: 0.5,
+                fillColor: '#00ccff',
+            }).addTo(map)
+            .bindPopup(description);
+    }
+</script>
+<script src="/static/js/idw-legend.js"></script>
+<!-- Health insurance -->
+<script>
+    var Address_Translator = new Vue({
+        el: '#Health_Insurance',
+        data: {
+            selected: ''
+        },
+        methods: {
+            city_change: function () {
+                let self = this;
+                axios.get('/city_pneumonia', {
+                    params: {
+                        city: self.selected,
+                        id: self.selected
+                    }
+                })
+                    .then(function (response) {
+                        console.log(response);
+                        draw_line_chart('Health_Insurance_Visits', response.data['健保就診總人次'], self.selected+'健保就診總人次');
+                        draw_line_chart('Other_pneumonia_health_insurance_visits', response.data['其他肺炎健保就診人次'], self.selected+'其他肺炎健保就診人次');
+                    })
+                    .catch(function (error) {
+                        console.log('Error! Could not reach the API. ' + error);
+                    })
+            }
+        }
+
+    })
+</script> 
+{% endblock %}
