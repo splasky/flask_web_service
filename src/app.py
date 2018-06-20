@@ -46,22 +46,7 @@ def main():
 
 @app.route("/PM25_map")
 def PM25_map():
-    return render_template(
-        "PM25.html",
-        PM25=PM25(),
-        citys=get_citys()
-    )
-
-def PM25():
-    air_box_json = pd.read_json("https://pm25.lass-net.org/data/last-all-airbox.json")
-    PM25points = [
-        [s["gps_lat"], s["gps_lon"], s["s_d0"]] for s in air_box_json["feeds"]
-    ]
-    return PM25points
-
-
-def get_pneumonia():
-    return pd.read_json("https://od.cdc.gov.tw/eic/NHI_OtherPneumonia.json")
+    return render_template("PM25.html", PM25=PM25(), citys=get_citys())
 
 
 @app.route("/citys")
@@ -95,6 +80,24 @@ def get_weather_from_city():
     return get_weather(city, date)
 
 
+@app.route("/week_weather_from_city", methods=["GET"])
+def get_week_weather_from_city():
+    city = request.args.get("city", None, type=str)
+    return get_week_weather(city)
+
+
+def PM25():
+    air_box_json = pd.read_json("https://pm25.lass-net.org/data/last-all-airbox.json")
+    PM25points = [
+        [s["gps_lat"], s["gps_lon"], s["s_d0"]] for s in air_box_json["feeds"]
+    ]
+    return PM25points
+
+
+def get_pneumonia():
+    return pd.read_json("https://od.cdc.gov.tw/eic/NHI_OtherPneumonia.json")
+
+
 def get_weather_icon(condition: int):
     icon = ""
     condition = int(condition)
@@ -119,9 +122,14 @@ def get_weather_icon(condition: int):
     return url_for("static", filename="pic/weather/{}.png".format(icon))
 
 
-def get_weather(city="台中市", date=0):
+def get_weather(city, date):
     weather = parse_weather_xml()
     return weather.date_dump(city, date)
+
+
+def get_week_weather(city):
+    weather = parse_weather_xml()
+    return weather.week_dump(city)
 
 
 def request_weather():
@@ -208,11 +216,30 @@ class Weather:
             "condition": condition,
         }
 
+    def week_dump(self):
+        week_result = []
+        for i in zip(self.Wx.time_element, self.MinT.time_element, self.MaxT.time_element):
+            max_tc = i[2].parameterName
+            min_tc = i[1].parameterName
+            wx = i[0]
+            week_result.append(
+                {
+                    "max_temp_c": int(max_tc),
+                    "max_temp_f": temp_c_to_f(int(max_tc)),
+                    "min_temp_c": int(min_tc),
+                    "min_temp_f": temp_c_to_f(int(min_tc)),
+                    "condition": {
+                        "text": wx.parameterName,
+                        "icon": get_weather_icon(wx.parameterValue),
+                    },
+                }
+            )
+        return week_result
+
 
 class Weathers(dict):
     def date_dump(self, city, date):
         weather = self.get(city)
-        print("{},{},{}".format(weather, city, date))
         if not weather:
             return None
 
@@ -220,6 +247,18 @@ class Weathers(dict):
             {
                 "location": {"name": city, "country": "Taiwan"},
                 "current": weather.date_dump(date),
+            }
+        )
+
+    def week_dump(self, city="台中市"):
+        weather = self.get(city)
+        if not weather:
+            return None
+
+        return json.dumps(
+            {
+                "location": {"name": city, "country": "Taiwan"},
+                "current": weather.week_dump(),
             }
         )
 
