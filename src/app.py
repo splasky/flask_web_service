@@ -15,6 +15,7 @@ import xml.etree.ElementTree as ET
 from urllib.parse import quote
 from datetime import datetime
 from math import floor
+import numpy as np
 
 mysql = MySQL()
 app = Flask(__name__)
@@ -86,6 +87,31 @@ def get_week_weather_from_city():
     return get_week_weather(city)
 
 
+@app.route("/get_pm25_pollution_source", methods=["GET"])
+def get_pm25_pollution_source():
+    location = request.args.get("location", None, type=str)
+    local_pollution = get_PM25_pollutions()
+    east = local_pollution[local_pollution["area"] == location]
+    east = east[["PM10_EMI", "PM2.5_EMI", "comp_kind"]]
+    east = east.replace("***", np.nan).replace("", np.nan)
+    east = east[pd.notnull(east["comp_kind"])]
+    east = east[pd.notnull(east["PM2.5_EMI"])]
+    east = east[pd.notnull(east["PM10_EMI"])]
+    east["PM10_EMI"] = pd.to_numeric(east["PM10_EMI"])
+    east["PM2.5_EMI"] = pd.to_numeric(east["PM2.5_EMI"])
+    east = east.groupby("comp_kind").sum()
+    pm25_large = east.nlargest(10, "PM2.5_EMI")
+    pm10_large = east.nlargest(10, "PM10_EMI")
+    return json.dumps(
+        {
+            "PM2.5_source": list(pm25_large.index.get_values()),
+            "PM2.5": list(pm25_large["PM2.5_EMI"]),
+            "PM10_source": list(pm10_large.index.get_values()),
+            "PM10": list(pm10_large["PM10_EMI"]),
+        }
+    )
+
+
 def PM25():
     air_box_json = pd.read_json("https://pm25.lass-net.org/data/last-all-airbox.json")
     PM25points = [
@@ -96,6 +122,12 @@ def PM25():
 
 def get_pneumonia():
     return pd.read_json("https://od.cdc.gov.tw/eic/NHI_OtherPneumonia.json")
+
+
+def get_PM25_pollutions():
+    return pd.read_json(
+        "http://opendata.epa.gov.tw/ws/Data/ATM00734/?$skip=0&$top=1000&format=json"
+    )
 
 
 def get_weather_icon(condition: int):
@@ -218,7 +250,9 @@ class Weather:
 
     def week_dump(self):
         week_result = []
-        for i in zip(self.Wx.time_element, self.MinT.time_element, self.MaxT.time_element):
+        for i in zip(
+            self.Wx.time_element, self.MinT.time_element, self.MaxT.time_element
+        ):
             max_tc = i[2].parameterName
             min_tc = i[1].parameterName
             wx = i[0]

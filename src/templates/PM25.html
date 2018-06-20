@@ -1,6 +1,5 @@
 {% extends 'base.html' %} 
-{% block title %}PM25{% endblock %} 
-
+{% block title %}PM2.5{% endblock %} 
 {%block head %}
 <meta charset="utf-8" />
 <meta http-equiv="refresh" content="300">
@@ -43,6 +42,30 @@
             chart.draw(data_table, options);
         }
     }
+
+    function draw_pie_chart(element_id, x, y, title) {
+        google.charts.load('current', { 'packages': ['corechart'] });
+        google.charts.setOnLoadCallback(drawChart);
+        function drawChart() {
+            var data_table = new google.visualization.DataTable();
+            data_table.addColumn('string', 'pollution source');
+            data_table.addColumn('number', title);
+            var mapped = x.map(function(e,i){
+                return [e,y[i]];
+            })
+
+            for(let i in mapped){
+                data_table.addRow(mapped[i]);
+            }
+
+            var options = {
+                title: title,
+                is3D: true,
+            };
+            var chart = new google.visualization.PieChart(document.getElementById(element_id));
+            chart.draw(data_table, options);
+        }
+    }
 </script>
 
 <style>
@@ -72,9 +95,22 @@
         <option value="{{ city }}">{{ city }}</option>
         {% endfor %}
     </select>
-    <div>
-        <div id="Health_Insurance_Visits" style="width: 900px; height: 500px"></div>
-        <div id="Other_pneumonia_health_insurance_visits" style="width: 900px; height: 500px"></div>
+    <div class="card-deck">
+        <div class="card" id="Health_Insurance_Visits" style="width: 900px; height: 500px"></div>
+        <div class="card" id="Other_pneumonia_health_insurance_visits" style="width: 900px; height: 500px"></div>
+    </div>
+</div>
+<div id="Pollution_source">
+    <h1>各縣市空氣污染源</h1>
+    <label>選擇地區</label>
+    <select v-model="selected" v-on:change="selected_change">
+        <option v-for="option in options" v-bind:value="option.value">
+            ${ option.text }
+        </option>
+    </select>
+    <div class="card-deck">
+        <div class="card" id="PM2.5" style="width: 900px; height: 500px"></div>
+        <div class="card" id="PM10" style="width: 900px; height: 500px"></div>
     </div>
 </div>
 
@@ -127,8 +163,8 @@
         data: {
             selected: ''
         },
-        mounted(){
-            this.selected="台中市";
+        mounted() {
+            this.selected = "台中市";
         },
         methods: {
             city_change: function () {
@@ -141,8 +177,8 @@
                 })
                     .then(function (response) {
                         console.log(response);
-                        draw_line_chart('Health_Insurance_Visits', response.data['健保就診總人次'], self.selected+'健保就診總人次');
-                        draw_line_chart('Other_pneumonia_health_insurance_visits', response.data['其他肺炎健保就診人次'], self.selected+'其他肺炎健保就診人次');
+                        draw_line_chart('Health_Insurance_Visits', response.data['健保就診總人次'], self.selected + '健保就診總人次');
+                        draw_line_chart('Other_pneumonia_health_insurance_visits', response.data['其他肺炎健保就診人次'], self.selected + '其他肺炎健保就診人次');
                     })
                     .catch(function (error) {
                         console.log('Error! Could not reach the API. ' + error);
@@ -151,5 +187,46 @@
         }
 
     });
-</script> 
+</script>
+<!-- Pollution source -->
+<script>
+    new Vue({
+        el: '#Pollution_source',
+        delimiters: ['${', '}'],
+        data: {
+            selected: '',
+            options: [
+                { text: '花東空品區', value: '花東空品區' },
+                { text: '宜蘭空品區', value: '宜蘭空品區' },
+                { text: '高屏空品區', value: '高屏空品區' },
+                { text: '雲嘉南空品區', value: '雲嘉南空品區' },
+                { text: '中部空品區', value: '中部空品區' },
+                { text: '竹苗空品區', value: '竹苗空品區' },
+                { text: '北部空品區', value: '北部空品區' }
+            ]
+        },
+        mounted() {
+            this.selected = "花東空品區";
+        },
+        methods: {
+            selected_change: function () {
+                let self = this;
+                axios.get('/get_pm25_pollution_source', {
+                    params: {
+                        location: self.selected
+                    }
+                })
+                    .then(function (response) {
+                        console.log(response);
+                        draw_pie_chart('PM2.5', response.data["PM2.5_source"],response.data["PM2.5"], self.selected + 'PM2.5污染源');
+                        draw_pie_chart('PM10', response.data["PM10_source"],response.data["PM10"], self.selected + 'PM10污染源');
+                    })
+                    .catch(function (error) {
+                        console.log('Error! Could not reach the API. ' + error);
+                    })
+            }
+        }
+
+    });
+</script>
 {% endblock %}
