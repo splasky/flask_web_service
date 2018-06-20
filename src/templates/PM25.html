@@ -1,4 +1,7 @@
-{% extends 'base.html' %} {% block title %}PM25{% endblock %} {%block head %}
+{% extends 'base.html' %} 
+{% block title %}PM25{% endblock %} 
+
+{%block head %}
 <meta charset="utf-8" />
 <meta http-equiv="refresh" content="300">
 <link href='https://api.tiles.mapbox.com/mapbox.js/v1.6.3/mapbox.css' rel="stylesheet" />
@@ -72,6 +75,8 @@
     <div id="map"></div>
 </div>
 <div id="Health_Insurance">
+    <h1>各縣市歷年健保就醫人數</h1>
+    <label>選擇縣市</label>
     <select v-model="selected" v-on:change="city_change">
         {% for city in citys %}
         <option value="{{ city }}">{{ city }}</option>
@@ -127,10 +132,13 @@
 <script src="/static/js/idw-legend.js"></script>
 <!-- Health insurance -->
 <script>
-    var Address_Translator = new Vue({
+    new Vue({
         el: '#Health_Insurance',
         data: {
             selected: ''
+        },
+        mounted(){
+            this.selected="台中市";
         },
         methods: {
             city_change: function () {
@@ -152,6 +160,6 @@
             }
         }
 
-    })
+    });
 </script> 
 {% endblock %}

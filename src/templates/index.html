@@ -17,8 +17,9 @@
 {% endblock %}
 
 {% block content %}
-
+    <h1>一週天氣</h1>
     <div id="city_for_weather">
+        <label>選擇城市</label>
         <select v-model="weather_city">
             {% for city in weather_citys %}
             <option value="{{ city }}">{{ city }}</option>
@@ -26,9 +27,24 @@
         </select>
     </div>
     <div id="app">
-        <weather-app v-if="validResponse" :city=city :location=location :hours=hours :mins=mins :day=day :temp=temp :tempc_max=max_temp_c
-            :tempc_min=min_temp_c :tempf_max=max_temp_f :tempf_min=min_temp_f :cloudtxt=conditionText :cloudicon=conditionIcon>
+        <div class="card-columns">
+        <weather-app 
+        v-if="validResponse"
+        v-for="post in posts" 
+        :city=post.city 
+        :location=post.location 
+        :hours=post.hours 
+        :mins=post.mins 
+        :day=post.day 
+        :temp=post.temp 
+        :tempc_max=post.max_temp_c
+        :tempc_min=post.min_temp_c 
+        :tempf_max=post.max_temp_f 
+        :tempf_min=post.min_temp_f 
+        :cloudtxt=post.conditionText 
+        :cloudicon=post.conditionIcon>
         </weather-app>
+        </div>
     </div>
 
     <div id='address_translator'>
